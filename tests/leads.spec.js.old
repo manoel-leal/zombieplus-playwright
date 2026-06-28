@@ -1,0 +1,104 @@
+// @ts-check
+import { test, expect } from '@playwright/test';
+
+test('deve cadastrar um lead na fila de espera', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+
+  //await page.click('//button[text()="Aperte o play... se tiver coragem"]');
+
+  //await page.getByRole('button', {name: 'Aperte o play... se tiver coragem'}).click();
+
+  // para utilizar a estratégia contains conforme abaixo, basta substituir aspas simples por barras
+  await page.getByRole('button', {name: /Aperte o play/}).click();
+
+  //Checkpoint - asserts no meio do fluxo de teste para garantir que a modal aberta é a esperada.
+  await expect(page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera');
+
+  //await page.locator('#name').fill('pessoa@test.com');
+
+  await page.locator('input[name=name]').fill('Pessoa Teste');
+  await page.getByPlaceholder('Informe seu email').fill('Teste@teste.com');
+
+  // procura o botão quero entrar na fila dentro do escopo da modal, isso mitiga o erro caso tenha um botão com o mesmo nome na pagina 
+  await page.getByTestId('modal').getByText('Quero entrar na fila!').click();
+
+
+  /*
+  * Estratégia para lidar com elementos flutuantes, que são mensagens que aparecem rapidamente na tela e depois some
+  * primeiro vamos clicar na mensagem localizando por parte da string dessa pelo comando await page.getByText('seus dados conosco').click();
+  * após isso, vamos salvar numa variável todo conteúdo da página html daquele momento no qual a mensagem esta presente na tela
+  * depois é necessário exibir no log todo esse html.
+  * rodar a automação no modo --ui para ter toda a timeline da execução
+  * Capturar o html e salvar em um arquivo
+  * usar esse html para procurar o locator da mensagem.
+  * após isso esse trecho de código abaixo pode ser retirado, ele só serve como estratégia para conseguirmos o locator da mensagem.
+  */
+  // await page.getByText('seus dados conosco').click();
+  // const content = await page.content();
+  // console.log(content);
+
+  const toast = "Agradecemos por compartilhar seus dados conosco. Em breve, nossa equipe entrará em contato!";
+
+  await expect(page.locator('.toast')).toHaveText(toast);
+
+});
+
+test('não deve cadastrar com e-mail inválido', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+
+  await page.getByRole('button', {name: /Aperte o play/}).click();
+  await expect(page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera');
+
+  await page.locator('input[name=name]').fill('Pessoa Teste');
+  await page.getByPlaceholder('Informe seu email').fill('teste.com');
+
+  await page.getByTestId('modal').getByText('Quero entrar na fila!').click();
+
+  await expect(page.locator('.alert')).toHaveText('Email incorreto');
+
+});
+
+test('não deve cadastrar quando o nome não é preenchido', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+
+  await page.getByRole('button', {name: /Aperte o play/}).click();
+  await expect(page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera');
+
+  await page.getByPlaceholder('Informe seu email').fill('teste@teste.com');
+
+  await page.getByTestId('modal').getByText('Quero entrar na fila!').click();
+
+  await expect(page.locator('.alert')).toHaveText('Campo obrigatório');
+
+});
+
+test('não deve cadastrar quando o e-mail não é preenchido', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+
+  await page.getByRole('button', {name: /Aperte o play/}).click();
+  await expect(page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera');
+
+  await page.locator('input[name=name]').fill('Pessoa Teste');
+
+  await page.getByTestId('modal').getByText('Quero entrar na fila!').click();
+
+  await expect(page.locator('.alert')).toHaveText('Campo obrigatório');
+
+});
+
+test('não deve cadastrar quando nenhum campo é preenchido', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
+
+  await page.getByRole('button', {name: /Aperte o play/}).click();
+  await expect(page.getByTestId('modal').getByRole('heading')).toHaveText('Fila de espera');
+
+  await page.getByTestId('modal').getByText('Quero entrar na fila!').click();
+
+  // Como 2 campos obrigatórios não foram preenchidos, esse locator do .alert vai retornar 2 elementos. Passando um array no toHaveText com esses 2 elementos 
+  // resolve esse problema.
+  await expect(page.locator('.alert')).toHaveText([
+    'Campo obrigatório', 
+    'Campo obrigatório'
+  ]);
+
+});
