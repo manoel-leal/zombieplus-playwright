@@ -30,3 +30,12 @@ npx playwright show-report
 
 <hr>
 Curso disponível em https://qaxperience.com
+
+## Arquiteturas
+
+Nesse projeto tem exemplos de padrões de projetos de automação de testes diferentes como o PageObjects e o Custon actions.
+
+- O modelo do projeto em PageObjects esta na branch page-object-model;
+- O modelo baseado em Custon actions esta na branch master;
+- Na branch do projeto também esta um modelo de arquitetura onde é injetada as pages(ou actions) no contexto do page que é próprio do Playwright;
+- Essa injeção de dependência ocorre no arquivo index.js.

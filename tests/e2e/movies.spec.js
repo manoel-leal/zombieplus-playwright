@@ -1,21 +1,9 @@
-const { test, expect } = require('@playwright/test');
+// queremos importar o conteudo do arquivo index.js, mas como padrão do js, quando o nome do arquivo for index.js precisa apenas de apontar para o diretorio do arquivo.
+const { test, expect } = require('../support');
 
 const data = require('../support/fixtures/movies.json');
 const { executeSQL } = require('../support/databese.js');
 
-const {LoginPage} = require('../pages/LoginPage.js');
-const { Toast } = require('../pages/Components.js');
-const { MoviesPage } = require('../pages/MoviesPage.js');
-
-let loginPage;
-let toast;
-let moviesPage;
-
-test.beforeEach(async ({page}) => {
-    loginPage = new LoginPage(page);
-    toast = new Toast(page);
-    moviesPage = new MoviesPage(page);
-})
 
 test('Deve poder cadastrar um novo filme', async ({page}) => {
 
@@ -23,10 +11,21 @@ test('Deve poder cadastrar um novo filme', async ({page}) => {
 
     await executeSQL("DELETE FROM MOVIES WHERE TITLE = 'A Noite dos Mortos-Vivos';");
 
-    await loginPage.visit();
-    await loginPage.submit('admin@zombieplus.com', 'pwd123');
-    await moviesPage.isLoggedIn();
-    await moviesPage.create(movie.title, movie.overview, movie.company, movie.release_year);
+    await page.login.do('admin@zombieplus.com', 'pwd123');
+    await page.movies.create(movie.title, movie.overview, movie.company, movie.release_year);
 
-    await toast.haveText('Cadastro realizado com sucesso!');
+    await page.toast.haveText('Cadastro realizado com sucesso!');
 });
+
+test('Não deve cadastrar quando os campos obrigatórios não são preenchidos', async ({page}) => {
+    await page.login.do('admin@zombieplus.com', 'pwd123');
+    await page.movies.goForm();
+    await page.movies.submit();
+
+    await page.movies.alertHaveText([
+        'Por favor, informe o título.',
+        'Por favor, informe a sinopse.',
+        'Por favor, informe a empresa distribuidora.',
+        'Por favor, informe o ano de lançamento.'
+    ]);
+})

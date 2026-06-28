@@ -1,11 +1,18 @@
 import {expect} from '@playwright/test';
 
-export class LoginPage{
+
+export class Login{
     constructor(page){
         this.page = page;
     }
 
-    async visit(page){
+    async do(email, password){
+        await this.visit();
+        await this.submit('admin@zombieplus.com', 'pwd123');
+        await this.isLoggedIn();
+    }
+
+    async visit(){
         await this.page.goto('http://localhost:3000/admin/login');
 
         const loginForm = this.page.locator('.login-form');
@@ -17,6 +24,11 @@ export class LoginPage{
         await this.page.getByPlaceholder('Senha').fill(password);
         await this.page.getByText('Entrar').click();
         
+    }
+
+    async isLoggedIn(){
+        await this.page.waitForLoadState('networkidle');
+        await expect(this.page).toHaveURL(/.*admin/);
     }
 
     async alertEmailHaveText(text){
